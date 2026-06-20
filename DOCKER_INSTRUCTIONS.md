@@ -75,6 +75,64 @@ docker rm -f server-monitor
 docker rmi server-monitor
 ```
 
+### 5. Обновление контейнера (после изменений в коде)
+
+#### Способ 1: Полное обновление (рекомендуется)
+```bash
+# Останавливаем и удаляем старый контейнер
+docker stop server-monitor
+docker rm server-monitor
+
+# Собираем новый образ с теми же тегами
+docker build -t server-monitor .
+
+# Запускаем новый контейнер
+docker run -d \
+  -p 5000:5000 \
+  --name server-monitor \
+  --pid=host \
+  --privileged \
+  server-monitor
+```
+
+#### Способ 2: Пересборка и горячая замена
+```bash
+# Пересобираем образ
+docker build -t server-monitor .
+
+# Останавливаем старый контейнер
+docker stop server-monitor
+
+# Запускаем новый контейнер
+docker run -d \
+  -p 5000:5000 \
+  --name server-monitor \
+  --pid=host \
+  --privileged \
+  server-monitor
+
+# Удаляем старый контейнер (опционально)
+docker container prune -f
+```
+
+#### Способ 3: Использование Docker Compose (если настроен)
+```bash
+# Если есть docker-compose.yml
+docker-compose down
+docker-compose build
+docker-compose up -d
+```
+
+### 6. Проверка обновлений
+После обновления проверьте изменения:
+```bash
+# Проверьте логи на наличие ошибок
+docker logs server-monitor
+
+# Проверьте, что модель процессора отображается
+curl http://localhost:5000/api/stats
+```
+
 ## Решение проблем
 
 ### Проблема: Температура CPU показывает "N/A"
@@ -110,3 +168,4 @@ docker run -d -p 8080:5000 --name server-monitor server-monitor
 - Загрузку CPU
 - Использование ОЗУ
 - Температуру CPU (если доступна)
+- Модель процессора

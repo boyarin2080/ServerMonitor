@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template_string
 import psutil
+import platform
 
 app = Flask(__name__)
 
@@ -20,6 +21,25 @@ def get_cpu_temp():
         return "N/A"
 
 
+def get_cpu_model():
+    """Получаем модель процессора"""
+    try:
+        # Для Linux/Unix систем
+        if platform.system() == "Linux":
+            try:
+                with open('/proc/cpuinfo', 'r') as f:
+                    for line in f:
+                        if line.startswith('model name'):
+                            return line.split(':')[1].strip()
+            except:
+                pass
+        
+        # Альтернативный вариант через platform
+        return platform.processor() or platform.machine()
+    except:
+        return "Unknown"
+
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -33,6 +53,17 @@ HTML_TEMPLATE = """
         .card { background: #1e1e1e; padding: 20px; border-radius: 10px; min-width: 150px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h1 { color: #00adb5; }
         .value { font-size: 24px; font-weight: bold; margin-top: 10px; color: #eeeeee; }
+        .cpu-model { 
+            font-size: 16px; 
+            color: #a0a0a0; 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #2a2a2a; 
+            border-radius: 5px; 
+            max-width: 600px; 
+            margin-left: auto; 
+            margin-right: auto;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +73,7 @@ HTML_TEMPLATE = """
         <div class="card"><h3>ОЗУ (занято / всего)</h3><div class="value" id="ram">0 / 0 GB</div></div>
         <div class="card"><h3>Температура CPU</h3><div class="value" id="temp">0°C</div></div>
     </div>
+    <div class="cpu-model" id="cpu_model">Загрузка модели процессора...</div>
     <script>
         async function updateStats() {
             try {
@@ -50,6 +82,7 @@ HTML_TEMPLATE = """
                 document.getElementById('cpu').innerText = data.cpu + '%';
                 document.getElementById('ram').innerText = data.ram_used + ' / ' + data.ram_total + ' GB';
                 document.getElementById('temp').innerText = data.cpu_temp === 'N/A' ? 'N/A' : data.cpu_temp + '°C';
+                document.getElementById('cpu_model').innerText = data.cpu_model || 'Unknown';
             } catch (e) { console.error("Ошибка обновления:", e); }
         }
         setInterval(updateStats, 2000);
@@ -73,7 +106,8 @@ def stats():
         'cpu': psutil.cpu_percent(interval=None),
         'ram_used': round(vm.used / (1024 ** 3), 2),
         'ram_total': round(vm.total / (1024 ** 3), 2),
-        'cpu_temp': get_cpu_temp()
+        'cpu_temp': get_cpu_temp(),
+        'cpu_model': get_cpu_model()
     })
 
 
