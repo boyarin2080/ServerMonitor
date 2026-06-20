@@ -1,0 +1,19 @@
+# Игнорируем ненужные файлы
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv
+env
+.venv
+.env
+.idea
+.vscode
+*.log
+.git
+.gitignore
+.DS_Store
+README.md
+DOCKER_INSTRUCTIONS.md
+*.md
